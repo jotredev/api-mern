@@ -66,7 +66,7 @@ export class UserController {
 
       res.status(202).json({
         response: 'success',
-        message: 'Usuario creado',
+        message: 'Usuario creado, verifica tu email',
       });
     } catch (error) {
       console.log(error);
