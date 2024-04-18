@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon src/index.js",
+    "dev:api": "nodemon src/index.js --api",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

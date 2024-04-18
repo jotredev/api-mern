@@ -1,10 +1,10 @@
-import { Types } from 'mongoose';
-import User from '../models/user.model.js';
-import { checkPassword, hashPassword } from '../utils/user.util.js';
-import { validateEmail } from '../validators/email.validator.js';
-import Token from '../models/token.model.js';
-import { generateJWT, generateToken } from '../utils/token.util.js';
-import { UserEmail } from '../emails/user.email.js';
+import { Types } from "mongoose";
+import User from "../models/user.model.js";
+import { checkPassword, hashPassword } from "../utils/user.util.js";
+import { validateEmail } from "../validators/email.validator.js";
+import Token from "../models/token.model.js";
+import { generateJWT, generateToken } from "../utils/token.util.js";
+import { UserEmail } from "../emails/user.email.js";
 
 export class UserController {
   static createUser = async (req, res) => {
@@ -13,8 +13,8 @@ export class UserController {
 
       if (!name || !lastName || !email || !password) {
         return res.status(400).json({
-          response: 'error',
-          message: 'Todos los datos son obligatorios',
+          response: "error",
+          message: "Todos los datos son obligatorios",
         });
       }
 
@@ -23,19 +23,19 @@ export class UserController {
       if (userExists) {
         return res
           .status(409)
-          .json({ response: 'error', message: 'El usuario ya existe' });
+          .json({ response: "error", message: "El usuario ya existe" });
       }
 
       if (!validateEmail(email)) {
         return res
           .status(409)
-          .json({ response: 'error', message: 'Email no valido' });
+          .json({ response: "error", message: "Email no valido" });
       }
 
       if (password.length < 6) {
         return res.status(409).json({
-          response: 'error',
-          message: 'El password debe contener al menos 6 caracteres',
+          response: "error",
+          message: "El password debe contener al menos 6 caracteres",
         });
       }
 
@@ -65,14 +65,14 @@ export class UserController {
       });
 
       res.status(202).json({
-        response: 'success',
-        message: 'Usuario creado, verifica tu email',
+        response: "success",
+        message: "Usuario creado, verifica tu email",
       });
     } catch (error) {
       console.log(error);
       return res
         .status(500)
-        .json({ response: 'error', message: 'Error del servidor' });
+        .json({ response: "error", message: "Error del servidor" });
     }
   };
 
@@ -83,7 +83,7 @@ export class UserController {
       if (!token) {
         return res
           .status(409)
-          .json({ response: 'error', message: 'El token es obligatorio' });
+          .json({ response: "error", message: "El token es obligatorio" });
       }
 
       const tokenExists = await Token.findOne({ token });
@@ -91,7 +91,7 @@ export class UserController {
       if (!tokenExists) {
         return res
           .status(409)
-          .json({ response: 'error', message: 'Token no válido' });
+          .json({ response: "error", message: "Token no válido" });
       }
 
       // Buscamos el usuario y cambios el isConfirmed
@@ -103,12 +103,12 @@ export class UserController {
 
       res
         .status(200)
-        .json({ response: 'success', message: 'Cuanta confirmada' });
+        .json({ response: "success", message: "Cuanta confirmada" });
     } catch (error) {
       console.log(error);
       return res
         .status(500)
-        .json({ response: 'error', message: 'Error del servidor' });
+        .json({ response: "error", message: "Error del servidor" });
     }
   };
 
@@ -118,8 +118,8 @@ export class UserController {
 
       if (!email || !password) {
         return res.status(409).json({
-          response: 'error',
-          message: 'El email y el password son obligatorios',
+          response: "error",
+          message: "El email y el password son obligatorios",
         });
       }
 
@@ -128,13 +128,13 @@ export class UserController {
       if (!user) {
         return res
           .status(404)
-          .json({ response: 'error', message: 'Usuario no encontrado' });
+          .json({ response: "error", message: "Usuario no encontrado" });
       }
 
       if (!user.isActive) {
         return res.status(401).json({
-          response: 'error',
-          message: 'Tu cuenta esta inactiva, contacta un administrador',
+          response: "error",
+          message: "Tu cuenta esta inactiva, contacta un administrador",
         });
       }
 
@@ -155,9 +155,9 @@ export class UserController {
         });
 
         return res.status(401).json({
-          response: 'error',
+          response: "error",
           message:
-            'Tu cuenta no ha sido confirmada, pero hemos enviado un nuevo token',
+            "Tu cuenta no ha sido confirmada, pero hemos enviado un nuevo token",
         });
       }
 
@@ -166,14 +166,14 @@ export class UserController {
 
       if (!isPasswordCorrect) {
         return res.status(401).json({
-          response: 'error',
-          message: 'Password incorrecto',
+          response: "error",
+          message: "Password incorrecto",
         });
       }
 
       // Traemos el usaurio autenticado sin password
       const userAutenticated = await User.findOne({ email }).select(
-        '-password'
+        "-password"
       );
 
       // const x = { ...user };
@@ -183,12 +183,12 @@ export class UserController {
       const token = generateJWT(user._id);
       res
         .status(200)
-        .json({ response: 'success', user: userAutenticated, token });
+        .json({ response: "success", user: userAutenticated, token });
     } catch (error) {
       console.log(error);
       return res
         .status(500)
-        .json({ response: 'error', message: 'Error del servidor' });
+        .json({ response: "error", message: "Error del servidor" });
     }
   };
 
@@ -206,7 +206,7 @@ export class UserController {
       console.log(error);
       return res
         .status(500)
-        .json({ response: 'error', message: 'Error del servidor' });
+        .json({ response: "error", message: "Error del servidor" });
     }
   };
 
@@ -217,7 +217,7 @@ export class UserController {
       if (!Types.ObjectId.isValid(id)) {
         return res
           .status(404)
-          .json({ response: 'error', message: 'ID no válido' });
+          .json({ response: "error", message: "ID no válido" });
       }
 
       const user = await User.findById(id);
@@ -225,7 +225,7 @@ export class UserController {
       if (!user) {
         return res
           .status(404)
-          .json({ response: 'error', message: 'Usuario no encontrado' });
+          .json({ response: "error", message: "Usuario no encontrado" });
       }
 
       res.status(200).json(user);
@@ -233,7 +233,7 @@ export class UserController {
       console.log(error);
       return res
         .status(500)
-        .json({ response: 'error', message: 'Error del servidor' });
+        .json({ response: "error", message: "Error del servidor" });
     }
   };
 
@@ -244,7 +244,7 @@ export class UserController {
       if (!Types.ObjectId.isValid(id)) {
         return res
           .status(404)
-          .json({ response: 'error', message: 'ID no válido' });
+          .json({ response: "error", message: "ID no válido" });
       }
 
       const user = await User.findById(id);
@@ -252,7 +252,7 @@ export class UserController {
       if (!user) {
         return res
           .status(404)
-          .json({ response: 'error', message: 'Usuario no encontrado' });
+          .json({ response: "error", message: "Usuario no encontrado" });
       }
 
       const { name, lastName } = req.body;
@@ -268,12 +268,12 @@ export class UserController {
 
       res
         .status(200)
-        .json({ response: 'success', message: 'Usuario actualizado' });
+        .json({ response: "success", message: "Usuario actualizado" });
     } catch (error) {
       console.log(error);
       return res
         .status(500)
-        .json({ response: 'error', message: 'Error del servidor' });
+        .json({ response: "error", message: "Error del servidor" });
     }
   };
 
@@ -284,7 +284,7 @@ export class UserController {
       if (!Types.ObjectId.isValid(id)) {
         return res
           .status(404)
-          .json({ response: 'error', message: 'ID no válido' });
+          .json({ response: "error", message: "ID no válido" });
       }
 
       const user = await User.findById(id);
@@ -292,19 +292,19 @@ export class UserController {
       if (!user) {
         return res
           .status(404)
-          .json({ response: 'error', message: 'Usuario no encontrado' });
+          .json({ response: "error", message: "Usuario no encontrado" });
       }
 
       await user.deleteOne();
 
       res
         .status(200)
-        .json({ response: 'success', message: 'Usuario eliminado' });
+        .json({ response: "success", message: "Usuario eliminado" });
     } catch (error) {
       console.log(error);
       return res
         .status(500)
-        .json({ response: 'error', message: 'Error del servidor' });
+        .json({ response: "error", message: "Error del servidor" });
     }
   };
 }
