@@ -1,6 +1,8 @@
 import { Types } from "mongoose";
 
 import Ticket from "../models/ticket.model.js";
+import User from "../models/user.model.js";
+import { TicketEmail } from "../emails/ticket.email.js";
 
 export class TicketController {
   static createTicket = async (req, res) => {
@@ -24,15 +26,37 @@ export class TicketController {
         createdBy: user._id,
       });
 
-      await ticket.save();
+      const savedTicket = await ticket.save();
 
-      // TODO: NOTIFICACIÓN A LOS USUARIOS DE SOPORTE
+      // Obtenemos el ticket con los datos del creador
+      const ticketWithCreatedBy = await Ticket.findById(
+        savedTicket._id
+      ).populate({
+        path: "createdBy",
+        model: "User",
+        select: "-password -__v -updatedAt -isActive -isConfirmed",
+      });
+
+      // Obtenemos los usuarios que tengan el permiso de soporte
+      const usersSupport = await User.find({ permissions: { $in: "support" } });
+
+      // Enviamos el email a todos los usuarios que tengan el permiso de soporte
+      if (usersSupport) {
+        usersSupport.map(async (support) => {
+          await TicketEmail.createTicket({
+            ticketId: savedTicket._id,
+            name: ticketWithCreatedBy.createdBy.name,
+            email: support.email,
+            description: savedTicket.description,
+          });
+        });
+      }
 
       res
         .status(202)
         .json({ response: "success", message: "Ticket creado", ticket });
     } catch (error) {
-      console.log(error);
+      console.log("[ERROR_CREATE_TICKET]", error);
       return res
         .status(500)
         .json({ response: "error", message: "Error del servidor" });
@@ -221,14 +245,34 @@ export class TicketController {
       // Asignar ticket
       ticket.assignedTo = user._id;
 
-      const savedTicket = await ticket.save();
+      // Guardar ticket
+      await ticket.save();
 
-      // TODO: Notificar al usuario creador que ya hay técnico asignado
+      // Traer ticket con información del creador y a quien esta asignado
+      const ticketWithAssigned = await Ticket.findById(ticketId)
+        .populate({
+          path: "createdBy",
+          model: "User",
+          select: "-password -__v -updatedAt -isActive -isConfirmed",
+        })
+        .populate({
+          path: "assignedTo",
+          model: "User",
+          select: "-password -__v -updatedAt -isActive -isConfirmed",
+        });
+
+      TicketEmail.assignedUserSupport({
+        ticketId,
+        title: ticket.title,
+        nameUser: ticketWithAssigned.createdBy.name,
+        nameUserSupport: ticketWithAssigned.assignedTo.name,
+        email: ticketWithAssigned.createdBy.email,
+      });
 
       res.status(200).json({
         response: "success",
         message: "Ticket asignado",
-        ticket: savedTicket,
+        ticket: ticketWithAssigned,
       });
     } catch (error) {
       console.log(error);
@@ -251,7 +295,17 @@ export class TicketController {
           .json({ response: "error", message: "Sin autorización" });
       }
 
-      const ticket = await Ticket.findById(ticketId);
+      const ticket = await Ticket.findById(ticketId)
+        .populate({
+          path: "createdBy",
+          model: "User",
+          select: "-password -__v -updatedAt -isActive -isConfirmed",
+        })
+        .populate({
+          path: "assignedTo",
+          model: "User",
+          select: "-password -__v -updatedAt -isActive -isConfirmed",
+        });
 
       if (!ticket) {
         return res
@@ -263,8 +317,14 @@ export class TicketController {
       ticket.status = "inProcess";
       const savedTicket = await ticket.save();
 
-      // TODO: VALIDAR QUE TENGA UN TÉCNCIO ASIGNADO (OPCIONAL)
-      // TODO: NOTIFICAR AL USUARIO QUE SU TICKET ESTA EN PROCESO
+      TicketEmail.ticketInProcess({
+        ticketId,
+        title: ticket.title,
+        nameUser: ticket.createdBy.name,
+        nameUserSupport: ticket.assignedTo.name,
+        email: ticket.createdBy.email,
+        dueDate: savedTicket.dueDate,
+      });
 
       res.status(200).json({
         response: "success",
@@ -281,17 +341,19 @@ export class TicketController {
 
   static closeTicket = async (req, res) => {
     try {
-      const { user } = req;
       const { ticketId } = req.params;
 
-      // Validamos que el usuario tengo el permiso de support
-      if (!user.permissions.includes("support")) {
-        return res
-          .status(401)
-          .json({ response: "error", message: "Sin autorización" });
-      }
-
-      const ticket = await Ticket.findById(ticketId);
+      const ticket = await Ticket.findById(ticketId)
+        .populate({
+          path: "createdBy",
+          model: "User",
+          select: "-password -__v -updatedAt -isActive -isConfirmed",
+        })
+        .populate({
+          path: "assignedTo",
+          model: "User",
+          select: "-password -__v -updatedAt -isActive -isConfirmed",
+        });
 
       if (!ticket) {
         return res
@@ -302,7 +364,13 @@ export class TicketController {
       ticket.status = "completed";
       const savedTicket = await ticket.save();
 
-      // TODO: NOTIFICAR AL USUARIO QUE SU TICKET SE CERRO
+      TicketEmail.closeTicket({
+        ticketId,
+        title: ticket.title,
+        nameUser: ticket.createdBy.name,
+        nameUserSupport: ticket.assignedTo.name,
+        email: ticket.createdBy.email,
+      });
 
       res.status(200).json({
         response: "success",
