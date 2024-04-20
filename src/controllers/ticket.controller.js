@@ -30,7 +30,7 @@ export class TicketController {
 
       res
         .status(202)
-        .json({ response: "sucess", message: "Ticket creado", ticket });
+        .json({ response: "success", message: "Ticket creado", ticket });
     } catch (error) {
       console.log(error);
       return res
@@ -46,17 +46,21 @@ export class TicketController {
       let tickets = [];
 
       if (!user.permissions.includes("support")) {
-        tickets = await Ticket.find({ createdBy: user._id }).populate({
-          path: "createdBy",
-          model: "User",
-          select: "-password -__v -updatedAt -isActive -isConfirmed",
-        });
+        tickets = await Ticket.find({ createdBy: user._id })
+          .populate({
+            path: "createdBy",
+            model: "User",
+            select: "-password -__v -updatedAt -isActive -isConfirmed",
+          })
+          .sort({ createdAt: "desc" });
       } else {
-        tickets = await Ticket.find().populate({
-          path: "createdBy",
-          model: "User",
-          select: "-password -__v -updatedAt -isActive -isConfirmed",
-        });
+        tickets = await Ticket.find()
+          .populate({
+            path: "createdBy",
+            model: "User",
+            select: "-password -__v -updatedAt -isActive -isConfirmed",
+          })
+          .sort({ createdAt: "desc" });
       }
 
       res.status(200).json(tickets);
@@ -78,11 +82,17 @@ export class TicketController {
           .json({ response: "error", message: "ID no válido" });
       }
 
-      const ticket = await Ticket.findById(ticketId).populate({
-        path: "createdBy",
-        model: "User",
-        select: "-password -__v -updatedAt -isActive -isConfirmed",
-      });
+      const ticket = await Ticket.findById(ticketId)
+        .populate({
+          path: "createdBy",
+          model: "User",
+          select: "-password -__v -updatedAt -isActive -isConfirmed",
+        })
+        .populate({
+          path: "assignedTo",
+          model: "User",
+          select: "-password -__v -updatedAt -isActive -isConfirmed",
+        });
 
       if (!ticket) {
         return res
