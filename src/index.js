@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import fileUpload from "express-fileupload";
 import { corsConfig } from "./config/cors.config.js";
 import { userRoutes } from "./routes/v1/user.route.js";
 import { ticketRoutes } from "./routes/v1/ticket.route.js";
@@ -18,6 +19,12 @@ connectDB();
 // Json
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
+app.use(
+  fileUpload({
+    useTempFiles: true,
+    tempFileDir: "./src/uploads",
+  })
+);
 
 // Routing
 app.use("/api/v1/users", userRoutes);

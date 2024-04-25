@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model } from "mongoose";
 
 const userSchema = new Schema(
   {
@@ -24,14 +24,20 @@ const userSchema = new Schema(
       required: true,
       trim: true,
     },
-    image: {
-      type: String,
-      default: '',
+    avatar: {
+      url: {
+        type: String,
+        default: "",
+      },
+      publicId: {
+        type: String,
+        default: "",
+      },
     },
     permissions: {
       type: [String],
-      enum: ['default', 'support'],
-      default: ['default'],
+      enum: ["default", "support"],
+      default: ["default"],
     },
     isActive: {
       type: Boolean,
@@ -47,6 +53,6 @@ const userSchema = new Schema(
   }
 );
 
-const User = model('User', userSchema);
+const User = model("User", userSchema);
 
 export default User;

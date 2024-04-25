@@ -66,6 +66,9 @@ export class TicketController {
   static getAllTickets = async (req, res) => {
     try {
       const { user } = req;
+      const { page } = req.body;
+
+      const limit = 5;
 
       let tickets = [];
 
@@ -76,7 +79,9 @@ export class TicketController {
             model: "User",
             select: "-password -__v -updatedAt -isActive -isConfirmed",
           })
-          .sort({ createdAt: "desc" });
+          .sort({ createdAt: "desc" })
+          .skip((page - 1) * limit)
+          .limit(limit);
       } else {
         tickets = await Ticket.find()
           .populate({
@@ -84,10 +89,24 @@ export class TicketController {
             model: "User",
             select: "-password -__v -updatedAt -isActive -isConfirmed",
           })
-          .sort({ createdAt: "desc" });
+          .sort({ createdAt: "desc" })
+          .skip((page - 1) * limit)
+          .limit(limit);
       }
 
       res.status(200).json(tickets);
+    } catch (error) {
+      console.log(error);
+      return res
+        .status(500)
+        .json({ response: "error", message: "Error del servidor" });
+    }
+  };
+
+  static countTickets = async (req, res) => {
+    try {
+      const count = await Ticket.countDocuments();
+      res.status(200).json({ response: "success", totalDocs: count });
     } catch (error) {
       console.log(error);
       return res

@@ -7,7 +7,7 @@ export const ticketRoutes = express.Router();
 // Crear ticket
 ticketRoutes.post("/", checkAuth, TicketController.createTicket);
 // Obtener todos los tickets
-ticketRoutes.get("/", checkAuth, TicketController.getAllTickets);
+ticketRoutes.post("/get-all", checkAuth, TicketController.getAllTickets);
 // Obtener ticket por ID
 ticketRoutes.get("/:ticketId", checkAuth, TicketController.getTicketById);
 // Actualizar ticket
@@ -32,3 +32,5 @@ ticketRoutes.put(
   checkAuth,
   TicketController.closeTicket
 );
+// Contador de tickets
+ticketRoutes.get("/count/total", checkAuth, TicketController.countTickets);

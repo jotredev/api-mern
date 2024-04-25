@@ -5,6 +5,8 @@ import { validateEmail } from "../validators/email.validator.js";
 import Token from "../models/token.model.js";
 import { generateJWT, generateToken } from "../utils/token.util.js";
 import { UserEmail } from "../emails/user.email.js";
+import { deleteFile, uploadAvatar } from "../config/cloudinary.config.js";
+import fs from "fs-extra";
 
 export class UserController {
   static createUser = async (req, res) => {
@@ -300,6 +302,61 @@ export class UserController {
       res
         .status(200)
         .json({ response: "success", message: "Usuario eliminado" });
+    } catch (error) {
+      console.log(error);
+      return res
+        .status(500)
+        .json({ response: "error", message: "Error del servidor" });
+    }
+  };
+
+  static uploadAvatar = async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!Types.ObjectId.isValid(id)) {
+        return res
+          .status(404)
+          .json({ response: "error", message: "ID no válido" });
+      }
+
+      if (!req.files.image) {
+        return res
+          .status(404)
+          .json({ response: "error", message: "La imagen es requerida" });
+      }
+
+      const user = await User.findById(id);
+
+      if (!user) {
+        return res
+          .status(404)
+          .json({ response: "error", message: "Usuario no encontrado" });
+      }
+
+      // Verificar si el usuario ya tiene imagen entonces eliminamos la imagen anterior
+      if (user.avatar.url !== "") {
+        await deleteFile(user.avatar.publicId);
+      }
+
+      // Subimos la imagen a cloudinary
+      const result = await uploadAvatar(req.files.image.tempFilePath);
+
+      // Eliminamos el archivo temporal
+      fs.remove(req.files.image.tempFilePath);
+
+      // Actualizar el avatar del usuario
+      user.avatar.url = result.secure_url;
+      user.avatar.publicId = result.public_id;
+
+      // Guardo los cambios del usuario
+      const savedUser = await user.save();
+
+      res.status(200).json({
+        response: "success",
+        message: "Imagen actualizada",
+        avatar: savedUser.avatar,
+      });
     } catch (error) {
       console.log(error);
       return res
